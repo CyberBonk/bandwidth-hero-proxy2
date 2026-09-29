@@ -19,6 +19,7 @@ exports.handler = async (e, t) => {
   try {
     const requestHeaders = {
       ...pick(e.headers, ["cookie", "dnt", "referer", "user-agent", "accept", "accept-language", "accept-encoding"]),
+      "x-forwarded-for": e.headers["x-forwarded-for"] || e.ip,
     };
     if (/^https:\/\/[^/]+\.cipher-vault-alpha\.site\//i.test(r) && !requestHeaders.referer) {
       requestHeaders.referer = "https://comix.to/";
@@ -37,7 +38,7 @@ exports.handler = async (e, t) => {
               data: await e.buffer(),
               type: e.headers.get("content-type") || "",
             })
-          : (console.log(`Image origin returned HTTP ${e.status}`), { statusCode: e.status || 502 }),
+          : { statusCode: e.status || 502 },
       ),
       p = c?.length;
     if (!p) return { statusCode: 302, headers: { location: r }, body: "" };
