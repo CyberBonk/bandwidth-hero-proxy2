@@ -24,6 +24,10 @@ exports.handler = async (e, t) => {
     if (/^https:\/\/[^/]+\.cipher-vault-alpha\.site\//i.test(r) && !requestHeaders.referer) {
       requestHeaders.referer = "https://comix.to/";
     }
+    const comixOrigin = /^https:\/\/(?:[^/]+\.)?comix\.(?:to|ws)$/i.test(e.headers.origin || "");
+    const rawComix = /^https:\/\/[^/]+\.cipher-vault-alpha\.site\//i.test(r) &&
+      (new URL(r).searchParams.has("v3") || comixOrigin);
+    if (rawComix && comixOrigin) requestHeaders.origin = e.headers.origin;
     let h = {},
       { data: c, type: l } = await fetch(r, {
         headers: requestHeaders,
@@ -38,6 +42,14 @@ exports.handler = async (e, t) => {
       ),
       p = c?.length;
     if (!p) return { statusCode: 302, headers: { location: r }, body: "" };
+    if (rawComix) {
+      const rawHeaders = { "content-type": l, "content-encoding": "identity" };
+      for (const name of ["x-enc-seed", "x-enc-len", "x-enc-algo", "x-scramble-seed", "x-scramble-grid", "x-scramble-algo", "x-scramble-hash"]) {
+        const value = h.get(name);
+        if (value) rawHeaders[name] = value;
+      }
+      return { statusCode: 200, body: c.toString("base64"), isBase64Encoded: true, headers: rawHeaders };
+    }
     if (!shouldCompress(l, p, d))
       return (
         console.log("Bypassing... Size: ", c.length),
