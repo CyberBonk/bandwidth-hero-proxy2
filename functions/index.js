@@ -17,16 +17,12 @@ exports.handler = async (e, t) => {
     n = 0 != o,
     i = parseInt(a, 10) || 40;
   try {
-    const requestHeaders = {
-      ...pick(e.headers, ["cookie", "dnt", "referer", "user-agent", "accept", "accept-language", "accept-encoding"]),
-      "x-forwarded-for": e.headers["x-forwarded-for"] || e.ip,
-    };
-    if (/^https:\/\/[^/]+\.cipher-vault-alpha\.site\//i.test(r) && !requestHeaders.referer) {
-      requestHeaders.referer = "https://comix.to/";
-    }
     let h = {},
       { data: c, type: l } = await fetch(r, {
-        headers: requestHeaders,
+        headers: {
+          ...pick(e.headers, ["cookie", "dnt", "referer", "user-agent", "accept", "accept-language", "accept-encoding"]),
+          "x-forwarded-for": e.headers["x-forwarded-for"] || e.ip,
+        },
       }).then(async (e) =>
         e.ok
           ? ((h = e.headers),
@@ -34,10 +30,9 @@ exports.handler = async (e, t) => {
               data: await e.buffer(),
               type: e.headers.get("content-type") || "",
             })
-          : { statusCode: e.status || 502 },
+          : { statusCode: e.status || 302 },
       ),
-      p = c?.length;
-    if (!p) return { statusCode: 302, headers: { location: r }, body: "" };
+      p = c.length;
     if (!shouldCompress(l, p, d))
       return (
         console.log("Bypassing... Size: ", c.length),
